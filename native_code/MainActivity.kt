@@ -8,7 +8,6 @@ import android.provider.MediaStore
 import android.widget.Toast
 
 class MainActivity: FlutterActivity() {
-    // Имя канала (должно совпадать с Dart)
     private val CHANNEL = "com.bowlmates.app/camera"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -17,21 +16,15 @@ class MainActivity: FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
             call, result ->
             if (call.method == "openCamera") {
-                // ЛОГИКА ЗАПУСКА КАМЕРЫ
                 try {
                     val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    // Проверяем, есть ли приложение камеры (для Android < 11 или если есть queries)
-                    if (takePictureIntent.resolveActivity(packageManager) != null) {
-                        startActivity(takePictureIntent)
-                        result.success("Camera Opened")
-                    } else {
-                        // Пытаемся запустить даже если проверка не прошла (часто работает на современных ОС)
-                        startActivity(takePictureIntent)
-                        result.success("Force Opened")
-                    }
+                    // В Android 11+ без <queries> resolveActivity вернет null
+                    // Поэтому просто пытаемся запустить try-catch блоком
+                    startActivity(takePictureIntent)
+                    result.success("Launched")
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Error launching camera", Toast.LENGTH_SHORT).show()
-                    result.error("UNAVAILABLE", "Camera not available", null)
+                    Toast.makeText(context, "Не удалось найти камеру", Toast.LENGTH_LONG).show()
+                    result.error("ERROR", e.message, null)
                 }
             } else {
                 result.notImplemented()
