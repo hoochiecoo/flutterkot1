@@ -1,5 +1,5 @@
 name: native_camera_app
-description: Flutter WebView with Native Kotlin Camera.
+description: Flutter WebView with Native Kotlin Camera and Permissions.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   webview_flutter: ^4.7.0
+  # ПЛАГИН ДЛЯ ЗАПРОСА ПРАВ (ОБЯЗАТЕЛЕН)
+  permission_handler: ^11.3.0
 
 flutter:
   uses-material-design: true
