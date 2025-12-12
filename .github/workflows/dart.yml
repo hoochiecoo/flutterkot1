@@ -1,0 +1,52 @@
+name: Build Native Camera APK
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.19.0'
+          cache: true
+
+      # 1. Генерируем проект Android
+      - name: Generate Android Project
+        run: flutter create . --project-name=native_camera_app --org com.bowlmates.app
+
+      # 2. ИНТЕГРАЦИЯ KOTLIN: Подменяем стандартный MainActivity на наш кастомный
+      - name: Inject Custom Kotlin Code
+        run: |
+          # Копируем наш файл из native_code в структуру Android проекта
+          cp native_code/MainActivity.kt android/app/src/main/kotlin/com/bowlmates/app/MainActivity.kt
+          echo "Kotlin file injected successfully."
+
+      # 3. НАСТРОЙКА PERMISSIONS: Добавляем права на Камеру и Интернет в манифест
+      - name: Inject Permissions
+        run: |
+          # Вставляем разрешения перед тегом <application>
+          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application|g' android/app/src/main/AndroidManifest.xml
+          echo "Permissions injected."
+
+      - name: Fix minSdkVersion
+        run: |
+          sed -i 's|minSdkVersion .*|minSdkVersion 21|g' android/app/build.gradle
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-camera-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
